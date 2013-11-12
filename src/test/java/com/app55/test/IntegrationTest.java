@@ -4,28 +4,37 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
+import org.junit.Assert;
 import org.junit.Test;
 
 import com.app55.domain.Address;
 import com.app55.domain.Card;
+import com.app55.domain.Schedule;
 import com.app55.domain.Transaction;
 import com.app55.domain.User;
 import com.app55.message.CardCreateResponse;
 import com.app55.message.CardDeleteResponse;
 import com.app55.message.CardListResponse;
+import com.app55.message.ScheduleCreateResponse;
+import com.app55.message.ScheduleDeleteResponse;
+import com.app55.message.ScheduleGetResponse;
+import com.app55.message.ScheduleListResponse;
+import com.app55.message.ScheduleUpdateResponse;
 import com.app55.message.TransactionCommitResponse;
 import com.app55.message.TransactionCreateResponse;
 import com.app55.message.UserAuthenticateResponse;
 import com.app55.message.UserCreateResponse;
+import com.app55.message.UserGetResponse;
 import com.app55.message.UserUpdateResponse;
 import com.app55.test.util.TestUtil;
 
 /**
- * This test flow provides a basic test of the java library against a sandbox account
- *  with api credentials defined in environment variables (APP55_API_KEY, APP55_API_SECRET) or in the file TestConfiguration.
- * Please ensure these variables are setup correctly before attempting to run the tests.
+ * This test flow provides a basic test of the java library against a sandbox account with api credentials defined in environment variables (APP55_API_KEY,
+ * APP55_API_SECRET) or in the file TestConfiguration. Please ensure these variables are setup correctly before attempting to run the tests.
  */
 public class IntegrationTest
 {
@@ -33,6 +42,7 @@ public class IntegrationTest
 	public void test() throws Exception
 	{
 		User user = createUser().getUser();
+		checkGetUser(user);
 
 		Card card1 = createCard(user).getCard();
 		Transaction transaction = createTransaction(user, card1).getTransaction();
@@ -48,13 +58,47 @@ public class IntegrationTest
 
 		List<Card> cards = listCards(user, 3).getCards();
 
+		int count = 0;
+		Card workingCard = null;
 		for (Card card : cards)
-			deleteCard(user, card);
+		{
+			if (++count > 2)
+			{
+				workingCard = card;
+				break;
+			}
 
-		listCards(user, 0);
+			deleteCard(user, card);
+		}
+
+		listCards(user, 1);
 
 		updateUser(user);
 		authenticateUser(user.getId());
+
+		Schedule schedule1 = createSchedule(user, workingCard).getSchedule();
+		getSchedule(user, schedule1).getSchedule();
+
+		ScheduleGetResponse response = getSchedule(user, schedule1);
+		Assert.assertEquals(workingCard.getToken(), response.getCard().getToken());
+
+		Schedule schedule2 = createSchedule(user, workingCard, "0.12").getSchedule();
+		Schedule schedule3 = createSchedule(user, workingCard, "0.13").getSchedule();
+
+		ScheduleListResponse listResponse = listSchedules(user, null);
+		assertTrue("List does not contain expected schedule1", listResponse.getSchedules().contains(schedule1));
+		assertTrue("List does not contain expected schedule2", listResponse.getSchedules().contains(schedule2));
+		assertTrue("List does not contain expected schedule3", listResponse.getSchedules().contains(schedule3));
+		assertEquals("List is not the correct length", 3, listResponse.getSchedules().size());
+
+		deleteSchedule(user, schedule1);
+		deleteSchedule(user, schedule2);
+		deleteSchedule(user, schedule3);
+
+		listResponse = listSchedules(user, null);
+		assertEquals("Schedule list not expected size.", 3, listResponse.getSchedules().size());
+		listResponse = listSchedules(user, true);
+		assertEquals("Active schedule list not expected size.", 0, listResponse.getSchedules().size());
 	}
 
 	private UserCreateResponse createUser()
@@ -67,8 +111,8 @@ public class IntegrationTest
 		UserCreateResponse response = TestConfiguration.GATEWAY.createUser(new User(email, phone, password, password)).send();
 
 		System.out.println("UserCreated:" + response.getUser().getId());
-		assertEquals("UserCreate: Email", email, response.getUser().getEmail());
-		assertEquals("UserCreate: Phone", phone, response.getUser().getPhone());
+		assertEquals("UserCreate: Unexpected email.", email, response.getUser().getEmail());
+		assertEquals("UserCreate: Unexpected phone.", phone, response.getUser().getPhone());
 		System.out.println("UserCreate: SUCCESS");
 		return response;
 	}
@@ -81,8 +125,8 @@ public class IntegrationTest
 		System.out.println("\nCardCreate: " + card.getNumber());
 		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card).send();
 
-		assertEquals("CardCreate: Card Expiry", card.getExpiry(), response.getCard().getExpiry());
-		assertNotNull("CardCreate: Card Token", response.getCard().getToken());
+		Assert.assertEquals("CardCreate: Unexpected card expiry.", card.getExpiry(), response.getCard().getExpiry());
+		assertNotNull("CardCreate: Unexpected card token.", response.getCard().getToken());
 		System.out.println("CardCreate: SUCCESS");
 		return response;
 	}
@@ -92,7 +136,7 @@ public class IntegrationTest
 		System.out.println("\nCardList: " + user.getId());
 		CardListResponse response = TestConfiguration.GATEWAY.listCards(new User((long) user.getId())).send();
 
-		assertTrue("CardList: Card List Size", response.getCards().size() == expectedNumber);
+		assertTrue("CardList: Incorrect card list size.", response.getCards().size() == expectedNumber);
 		System.out.println("CardList: SUCCESS");
 		return response;
 	}
@@ -103,7 +147,7 @@ public class IntegrationTest
 
 		CardDeleteResponse response = TestConfiguration.GATEWAY.deleteCard(new User((long) user.getId()), new Card(card.getToken())).send();
 
-		assertNotNull("CardDelete: Response returned.", response);
+		assertNotNull("CardDelete: Response not returned.", response);
 		System.out.println("CardDelete: SUCCESS");
 		return response;
 	}
@@ -116,8 +160,8 @@ public class IntegrationTest
 
 		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction).send();
 
-		assertEquals("TransactionCreate: Amount", transaction.getAmount(), response.getTransaction().getAmount());
-		assertEquals("TransactionCreate: Code", "succeeded", response.getTransaction().getCode());
+		Assert.assertEquals("TransactionCreate: Unexpected amount.", transaction.getAmount(), response.getTransaction().getAmount());
+		Assert.assertEquals("TransactionCreate: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
 		System.out.println("TransactionCreate: SUCCESS");
 		return response;
 	}
@@ -128,8 +172,8 @@ public class IntegrationTest
 
 		TransactionCommitResponse response = TestConfiguration.GATEWAY.commitTransaction(new Transaction(transaction.getId())).send();
 
-		assertEquals("TransactionCommit: Code", "succeeded", response.getTransaction().getCode());
-		assertNotNull("TransactionCommit: Auth Code", response.getTransaction().getAuthCode());
+		Assert.assertEquals("TransactionCommit: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
+		assertNotNull("TransactionCommit: Unexpected transaction auth code.", response.getTransaction().getAuthCode());
 		System.out.println("TransactionCommit: SUCCESS");
 		return response;
 	}
@@ -143,9 +187,23 @@ public class IntegrationTest
 
 		UserUpdateResponse response = TestConfiguration.GATEWAY.updateUser(u).send();
 
-		assertNotNull("UserUpdate: Response returned.", response);
+		assertNotNull("UserUpdate: Response not returned.", response);
 		System.out.println("UserUpdate: SUCCESS");
 		return response;
+	}
+
+	private void checkGetUser(User user)
+	{
+		System.out.println("\nUserGet: " + user.getId());
+
+		// Remove extra data.
+		User basicUser = new User();
+		basicUser.setId(user.getId());
+
+		UserGetResponse response = TestConfiguration.GATEWAY.getUser(basicUser).send();
+
+		Assert.assertEquals("UserGet: Returned user not not as expected.", user.getId(), response.getUser().getId());
+		System.out.println("UserGet: SUCCESS");
 	}
 
 	private UserAuthenticateResponse authenticateUser(Long expectedUserId)
@@ -157,8 +215,101 @@ public class IntegrationTest
 
 		UserAuthenticateResponse response = TestConfiguration.GATEWAY.authenticateUser(user).send();
 
-		assertEquals("UserAuthenticate: Id", expectedUserId, response.getUser().getId());
+		Assert.assertEquals("UserAuthenticate: Unexpected user id.", expectedUserId, response.getUser().getId());
 		System.out.println("UserAuthenticate: SUCCESS");
+		return response;
+	}
+
+	private ScheduleCreateResponse createSchedule(User user, Card card)
+	{
+		return createSchedule(user, card, "0.10");
+	}
+
+	private ScheduleCreateResponse createSchedule(User user, Card card, String amount)
+	{
+		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+		String start = format.format(new Date());
+		System.out.println("\nScheduleCreate: " + user.getId() + " " + card.getToken() + " " + amount);
+
+		// Remove extra data.
+		Card cardTokenOnly = new Card();
+		cardTokenOnly.setToken(card.getToken());
+
+		Transaction transaction = new Transaction(amount, "EUR", "Scheduled Transaction");
+		Schedule schedule = new Schedule(Schedule.TIMEUNIT_DAILY, start);
+
+		ScheduleCreateResponse response = TestConfiguration.GATEWAY.createSchedule(user, cardTokenOnly, transaction, schedule).send();
+
+		assertNotNull("ScheduleCreate: Response not returned.", response);
+		System.out.println("ScheduleCreate: SUCCESS");
+		return response;
+	}
+
+	private ScheduleGetResponse getSchedule(User user, Schedule schedule)
+	{
+		System.out.println("\nScheduleGet: " + schedule.getId());
+
+		// Remove extra data.
+		Schedule basicSchedule = new Schedule();
+		basicSchedule.setId(schedule.getId());
+		User basicUser = new User();
+		basicUser.setId(user.getId());
+
+		ScheduleGetResponse response = TestConfiguration.GATEWAY.getSchedule(basicUser, basicSchedule).send();
+
+		Assert.assertEquals("ScheduleGet: Unexpected schedule id.", schedule.getId(), response.getSchedule().getId());
+		System.out.println("ScheduleGet: SUCCESS");
+		return response;
+	}
+
+	private ScheduleUpdateResponse updateSchedule(User user, Card card, Schedule schedule)
+	{
+		System.out.println("\nScheduleUpdate: " + schedule.getId());
+
+		// Remove extra data.
+		User basicUser = new User();
+		basicUser.setId(user.getId());
+		Card basicCard = new Card();
+		basicCard.setToken(card.getToken());
+		Schedule basicSchedule = new Schedule();
+		basicSchedule.setId(schedule.getId());
+
+		ScheduleUpdateResponse response = TestConfiguration.GATEWAY.updateSchedule(basicUser, basicCard, basicSchedule).send();
+
+		assertNotNull("ScheduleUpdate: Response not returned.", response);
+		System.out.println("ScheduleUpdate: SUCCESS");
+		return response;
+	}
+
+	private ScheduleListResponse listSchedules(User user, Boolean active)
+	{
+		System.out.println("\nScheduleList: " + user.getId());
+
+		// Remove extra data.
+		User basicUser = new User();
+		basicUser.setId(user.getId());
+
+		ScheduleListResponse response = TestConfiguration.GATEWAY.listSchedule(basicUser, active).send();
+
+		assertNotNull("ScheduleList: Response not returned.", response);
+		System.out.println("ScheduleList: SUCCESS");
+		return response;
+	}
+
+	private ScheduleDeleteResponse deleteSchedule(User user, Schedule schedule)
+	{
+		System.out.println("\nScheduleDelete: " + schedule.getId());
+
+		// Remove extra data.
+		User basicUser = new User();
+		basicUser.setId(user.getId());
+		Schedule basicSchedule = new Schedule();
+		basicSchedule.setId(schedule.getId());
+
+		ScheduleDeleteResponse response = TestConfiguration.GATEWAY.deleteSchedule(basicUser, basicSchedule).send();
+
+		assertNotNull("ScheduleDelete: Response not returned.", response);
+		System.out.println("ScheduleDelete: SUCCESS");
 		return response;
 	}
 }

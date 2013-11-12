@@ -1,8 +1,8 @@
 package com.app55.test;
 
 import com.app55.message.Message;
-import com.app55.message.TransactionCreateResponse;
 import com.app55.util.ReflectionUtil;
+import com.app55.message.TransactionCreateResponse;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -27,7 +27,7 @@ public class PopulateTest
 		userTable.put("id", null);
 		table.put("user", userTable);
 
-		ReflectionUtil.invokeMethod("populate", res, new Class<?>[]{ Map.class, Object.class }, new Object[]{ table, null });
+		ReflectionUtil.invokeMethod("populate", res, new Class<?>[] { Map.class, Object.class }, new Object[] { table, null });
 		Map<String, String> additionalFields = getAdditionalFields(res);
 
 		assertEquals("user.email additional fields presence.", email, additionalFields.get("user.email"));
@@ -51,7 +51,7 @@ public class PopulateTest
 		transactionTable.put("currency", currency);
 		table.put("transaction", transactionTable);
 
-		ReflectionUtil.invokeMethod("populate", res, new Class<?>[]{ Map.class, Object.class }, new Object[]{ table, res });
+		ReflectionUtil.invokeMethod("populate", res, new Class<?>[] { Map.class, Object.class }, new Object[] { table, res });
 		Map<String, String> additionalFields = getAdditionalFields(res);
 
 		assertEquals("other additional fields presence.", other, additionalFields.get("other"));
@@ -74,7 +74,7 @@ public class PopulateTest
 		mapValues.add(mapSet);
 		table.put("entryTest", mapValues);
 
-		ReflectionUtil.invokeMethod("populate", res, new Class<?>[]{ Map.class, Object.class }, new Object[]{ table, null });
+		ReflectionUtil.invokeMethod("populate", res, new Class<?>[] { Map.class, Object.class }, new Object[] { table, null });
 		Map<String, String> additionalFields = getAdditionalFields(res);
 
 		assertNotNull("values list additional fields presence.", additionalFields.get("values.0"));

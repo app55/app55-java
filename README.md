@@ -20,6 +20,7 @@ configurations, if you want to to run/debug the project within Eclipse.
 
 Revision History
 ----------------
+* 0.8.3 Now supports Scheduled payments.
 * 0.8.2 Initial library release. For App55 Release 2.8.0
 
 Dependencies

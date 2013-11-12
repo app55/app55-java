@@ -1,15 +1,22 @@
 package com.app55;
 
 import com.app55.domain.Card;
+import com.app55.domain.Schedule;
 import com.app55.domain.Transaction;
 import com.app55.domain.User;
 import com.app55.message.CardCreateRequest;
 import com.app55.message.CardDeleteRequest;
 import com.app55.message.CardListRequest;
+import com.app55.message.ScheduleCreateRequest;
+import com.app55.message.ScheduleDeleteRequest;
+import com.app55.message.ScheduleGetRequest;
+import com.app55.message.ScheduleListRequest;
+import com.app55.message.ScheduleUpdateRequest;
 import com.app55.message.TransactionCommitRequest;
 import com.app55.message.TransactionCreateRequest;
 import com.app55.message.UserAuthenticateRequest;
 import com.app55.message.UserCreateRequest;
+import com.app55.message.UserGetRequest;
 import com.app55.message.UserUpdateRequest;
 
 public class Gateway
@@ -67,19 +74,19 @@ public class Gateway
 		request.setGateway(this);
 		return request;
 	}
-	
+
 	public TransactionCreateRequest createTransaction(User user, Card card, Transaction transaction, String ipAddress)
 	{
 		TransactionCreateRequest request = new TransactionCreateRequest(user, card, transaction, ipAddress);
 		request.setGateway(this);
 		return request;
 	}
-	
+
 	public TransactionCreateRequest createTransaction(Card card, Transaction transaction, User user)
 	{
 		return createTransaction(user, card, transaction);
 	}
-	
+
 	public TransactionCreateRequest createTransaction(Card card, Transaction transaction)
 	{
 		TransactionCreateRequest request = new TransactionCreateRequest(card, transaction);
@@ -111,6 +118,49 @@ public class Gateway
 	public UserUpdateRequest updateUser(User user)
 	{
 		UserUpdateRequest request = new UserUpdateRequest(user);
+		request.setGateway(this);
+		return request;
+	}
+
+	public UserGetRequest getUser(User user)
+	{
+		UserGetRequest request = new UserGetRequest(user);
+		request.setGateway(this);
+		return request;
+	}
+
+	public ScheduleCreateRequest createSchedule(User user, Card card, Transaction transaction, Schedule schedule)
+	{
+		ScheduleCreateRequest request = new ScheduleCreateRequest(user, card, transaction, schedule);
+		request.setGateway(this);
+		return request;
+	}
+
+	public ScheduleGetRequest getSchedule(User user, Schedule schedule)
+	{
+		ScheduleGetRequest request = new ScheduleGetRequest(user, schedule);
+		request.setGateway(this);
+		return request;
+	}
+
+	public ScheduleUpdateRequest updateSchedule(User user, Card card, Schedule schedule)
+	{
+		ScheduleUpdateRequest request = new ScheduleUpdateRequest(user, card, schedule);
+		request.setGateway(this);
+		return request;
+	}
+
+	public ScheduleListRequest listSchedule(User user, Boolean active)
+	{
+		ScheduleListRequest request = new ScheduleListRequest(user);
+		request.setActive(active);
+		request.setGateway(this);
+		return request;
+	}
+
+	public ScheduleDeleteRequest deleteSchedule(User user, Schedule schedule)
+	{
+		ScheduleDeleteRequest request = new ScheduleDeleteRequest(user, schedule);
 		request.setGateway(this);
 		return request;
 	}

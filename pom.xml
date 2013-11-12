@@ -8,7 +8,7 @@
 	<groupId>com.app55</groupId>
 	<artifactId>app55-java</artifactId>
 	<name>App55 Library for Java</name>
-	<version>0.8.2</version>
+	<version>0.8.3</version>
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>

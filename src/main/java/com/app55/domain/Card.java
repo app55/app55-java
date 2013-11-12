@@ -36,7 +36,7 @@ public class Card
 
 	public Card(String holderName, String number, String expiry, String securityCode, String issue, Address address)
 	{
-		this(holderName, number, expiry, securityCode, address);;
+		this(holderName, number, expiry, securityCode, address);
 		this.issue = issue;
 	}
 

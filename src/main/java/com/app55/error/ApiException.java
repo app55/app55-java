@@ -51,7 +51,7 @@ public class ApiException extends RuntimeException
 	{
 		return new ApiException(message, code, null);
 	}
-	
+
 	public String getMessage()
 	{
 		return message;

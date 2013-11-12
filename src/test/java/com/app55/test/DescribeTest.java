@@ -31,11 +31,8 @@ public class DescribeTest
 		user.setId(1234L);
 		req.setUser(user);
 
-		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req,
-																						   new Class<?>[]{ Object.class,
-																										 String.class,
-																										 Map.class },
-																						   new Object[]{ req, null, null });
+		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[] { Object.class, String.class,
+				Map.class }, new Object[] { req, null, null });
 
 		assertNotNull("timestamp presence.", description.get("ts"));
 		assertEquals("user.email presence.", email, description.get("user.email"));
@@ -45,10 +42,8 @@ public class DescribeTest
 		Map<String, Boolean> exclude = new HashMap<String, Boolean>();
 		exclude.put("ts", true);
 
-		description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[]{ Object.class,
-																									   String.class,
-																									   Map.class },
-																	   new Object[]{ req, null, exclude });
+		description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[] { Object.class, String.class, Map.class },
+				new Object[] { req, null, exclude });
 
 		assertNull("timestamp absence.", description.get("ts"));
 	}
@@ -71,11 +66,8 @@ public class DescribeTest
 		card.setAddress(address);
 		req.setCard(card);
 
-		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req,
-																						   new Class<?>[]{ Object.class,
-																										 String.class,
-																										 Map.class },
-																						   new Object[]{ req, null, null });
+		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[] { Object.class, String.class,
+				Map.class }, new Object[] { req, null, null });
 
 		assertEquals("card.number presence.", number, description.get("card.number"));
 		assertEquals("card.address.city presence.", city, description.get("card.address.city"));
@@ -98,11 +90,8 @@ public class DescribeTest
 			req.getCards().add(card);
 		}
 
-		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req,
-																						   new Class<?>[]{ Object.class,
-																										 String.class,
-																										 Map.class },
-																						   new Object[]{ req, null, null });
+		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[] { Object.class, String.class,
+				Map.class }, new Object[] { req, null, null });
 
 		assertEquals("card.0.number presence.", number, description.get("cards.0.number"));
 		assertEquals("cards.3.number presence.", number, description.get("cards.2.number"));
@@ -114,9 +103,8 @@ public class DescribeTest
 	public void testEmptyDescription()
 	{
 		UserCreateRequest req = new UserCreateRequest();
-		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req,
-																						   new Class<?>[]{ Object.class },
-																						   new Object[]{ null });
+		Map<String, String> description = (Map<String, String>) ReflectionUtil.invokeMethod("describe", req, new Class<?>[] { Object.class },
+				new Object[] { null });
 
 		assertEquals("Empty map.", 0, description.size());
 	}

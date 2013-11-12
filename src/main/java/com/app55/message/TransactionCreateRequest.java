@@ -1,10 +1,10 @@
 package com.app55.message;
 
+import com.app55.domain.Transaction;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.app55.domain.Card;
-import com.app55.domain.Transaction;
 import com.app55.domain.User;
 
 public final class TransactionCreateRequest extends Request<TransactionCreateResponse>
@@ -32,7 +32,7 @@ public final class TransactionCreateRequest extends Request<TransactionCreateRes
 		this(user, card, transaction);
 		this.ipAddress = ipAddress;
 	}
-		
+
 	public TransactionCreateRequest(Card card, Transaction transaction)
 	{
 		this(null, card, transaction);

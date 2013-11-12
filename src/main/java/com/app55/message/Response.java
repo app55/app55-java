@@ -120,42 +120,36 @@ public class Response extends Message
 		Map<String, PropertyDescriptor> properties = ReflectionUtil.getAllProperties(o);
 		for (Entry<String, Object> entry : hashtable.entrySet())
 		{
-			try
-			{
-				String key = entry.getKey();
-				Object value = entry.getValue();
+			String key = entry.getKey();
+			Object value = entry.getValue();
 
-				if (value == null || !properties.containsKey(key))
+			if (value == null || !properties.containsKey(key))
+			{
+				if (value != null)
 				{
-					if (value != null)
+					if (value instanceof Map)
 					{
-						if (value instanceof Map)
+						populateAdditional((Map<String, Object>) value, prefix + key + ".");
+					}
+					else if (value instanceof List)
+					{
+						int i = 0;
+						for (Object arrayItem : ((List<Object>) value))
 						{
-							populateAdditional((Map<String, Object>) value, prefix + key + ".");
-						}
-						else if (value instanceof List)
-						{
-							int i = 0;
-							for (Object arrayItem : ((List<Object>) value))
+							if (arrayItem instanceof Map)
 							{
-								if (arrayItem instanceof Map)
-								{
-									populateAdditional((Map<String, Object>) arrayItem, prefix + key + "." + i++ + ".");
-								}
-								else
-								{
-									additionalFields.put(prefix + key + "." + i++, arrayItem.toString());
-								}
+								populateAdditional((Map<String, Object>) arrayItem, prefix + key + "." + i++ + ".");
+							}
+							else
+							{
+								additionalFields.put(prefix + key + "." + i++, arrayItem.toString());
 							}
 						}
-						else
-							additionalFields.put(prefix + key, value.toString());
 					}
-					continue;
+					else
+						additionalFields.put(prefix + key, value.toString());
 				}
-			}
-			catch (Exception e)
-			{
+				continue;
 			}
 		}
 	}

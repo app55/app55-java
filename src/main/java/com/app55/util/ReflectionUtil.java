@@ -62,6 +62,7 @@ public final class ReflectionUtil
 		}
 		catch (Exception e)
 		{
+			// Means that the method doesn't exist or we don't have access to it.
 			return null;
 		}
 	}
@@ -79,6 +80,7 @@ public final class ReflectionUtil
 		}
 		catch (Exception e)
 		{
+			// Means that the member doesn't exist or we don't have access to it.
 			return null;
 		}
 	}

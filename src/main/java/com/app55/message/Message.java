@@ -1,6 +1,8 @@
 package com.app55.message;
 
 import java.beans.PropertyDescriptor;
+import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.URLEncoder;
 import java.util.Collection;
@@ -9,13 +11,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
+import com.app55.util.ReflectionUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.app55.Gateway;
 import com.app55.converter.Converter;
 import com.app55.util.EncodeUtil;
-import com.app55.util.ReflectionUtil;
 
 public abstract class Message
 {
@@ -89,8 +91,9 @@ public abstract class Message
 
 			return formData;
 		}
-		catch (Exception e)
+		catch (UnsupportedEncodingException e)
 		{
+			// This will never happen. UTF-8 is supported.
 			return null;
 		}
 	}
@@ -127,8 +130,13 @@ public abstract class Message
 			{
 				value = m.invoke(o);
 			}
-			catch (Exception e)
+			catch (InvocationTargetException e)
 			{
+				// If the invocation results in an exception, this wraps it. So if anything goes wrong, skip this method.
+			}
+			catch (IllegalAccessException e)
+			{
+				// No access to method means it shouldn't be invoked.
 			}
 
 			if (value == null)

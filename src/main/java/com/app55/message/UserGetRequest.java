@@ -3,16 +3,16 @@ package com.app55.message;
 import com.app55.domain.User;
 import org.codehaus.jackson.annotate.JsonIgnore;
 
-public final class UserCreateRequest extends Request<UserCreateResponse>
+public class UserGetRequest extends Request<UserGetResponse>
 {
 	private User	user;
 
-	public UserCreateRequest()
+	public UserGetRequest()
 	{
-		super(UserCreateResponse.class);
+		super(UserGetResponse.class);
 	}
 
-	public UserCreateRequest(User user)
+	public UserGetRequest(User user)
 	{
 		this();
 		this.user = user;
@@ -22,14 +22,7 @@ public final class UserCreateRequest extends Request<UserCreateResponse>
 	@JsonIgnore
 	public String getHttpEndpoint()
 	{
-		return getGateway().getEnvironment().getBaseUrl() + "/user";
-	}
-
-	@Override
-	@JsonIgnore
-	public String getHttpMethod()
-	{
-		return "POST";
+		return getGateway().getEnvironment().getBaseUrl() + "/user/" + user.getId();
 	}
 
 	public User getUser()

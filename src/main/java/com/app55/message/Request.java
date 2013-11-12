@@ -2,7 +2,6 @@ package com.app55.message;
 
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -14,8 +13,8 @@ import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.app55.error.ApiException;
-import com.app55.error.RequestException;
 import com.app55.error.InvalidSignatureException;
+import com.app55.error.RequestException;
 import com.app55.util.EncodeUtil;
 import com.app55.util.JsonUtil;
 
@@ -117,7 +116,8 @@ public abstract class Request<T extends Response> extends Message
 
 			return r;
 		}
-		catch (ApiException a) {
+		catch (ApiException a)
+		{
 			// This just gets rethrown
 			throw a;
 		}
