@@ -1,13 +1,10 @@
 package com.app55.message;
 
-import java.io.DataOutputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
+import java.io.UnsupportedEncodingException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Scanner;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -15,6 +12,8 @@ import org.codehaus.jackson.annotate.JsonProperty;
 import com.app55.error.ApiException;
 import com.app55.error.InvalidSignatureException;
 import com.app55.error.RequestException;
+import com.app55.transport.HttpListener;
+import com.app55.transport.HttpResponse;
 import com.app55.util.EncodeUtil;
 import com.app55.util.JsonUtil;
 
@@ -51,70 +50,17 @@ public abstract class Request<T extends Response> extends Message
 		return new SimpleDateFormat("yyyyMMddHHmmss").format(new Date());
 	}
 
-	@SuppressWarnings("unchecked")
 	public T send() throws ApiException
 	{
 		try
 		{
-			URL url;
-			HttpURLConnection con = null;
+			String qs = fetchQueryString();
+			byte[] data = fetchData(qs);
+			String url = fetchUrl(qs);
+			String authString = fetchAuthString();
 
-			Map<String, Boolean> exclude = new HashMap<String, Boolean>();
-			exclude.put("sig", true);
-			exclude.put("ts", true);
-			String qs = toFormData(false, exclude);
-
-			if ("GET".equals(getHttpMethod()))
-			{
-				url = new URL(getHttpEndpoint() + "?" + qs);
-				con = (HttpURLConnection) url.openConnection();
-				con.setRequestMethod(getHttpMethod());
-
-				con.setRequestProperty("Authorization", EncodeUtil.createBasicAuthString(getGateway().getApiKey(), getGateway().getApiSecret()));
-			}
-			else
-			{
-				byte[] data = qs.getBytes("UTF-8");
-
-				url = new URL(getHttpEndpoint());
-				con = (HttpURLConnection) url.openConnection();
-				con.setRequestMethod(getHttpMethod());
-
-				con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-				con.setRequestProperty("Authorization", EncodeUtil.createBasicAuthString(getGateway().getApiKey(), getGateway().getApiSecret()));
-				con.setFixedLengthStreamingMode(data.length);
-				con.setDoOutput(true);
-
-				DataOutputStream wr = new DataOutputStream(con.getOutputStream());
-				wr.write(data);
-				wr.flush();
-				wr.close();
-			}
-
-			Scanner s;
-			if (con.getResponseCode() != 200)
-			{
-				throw new RequestException("Http Error " + con.getResponseCode(), (long) con.getResponseCode(), null);
-			}
-			else
-			{
-				s = new Scanner(con.getInputStream());
-			}
-			s.useDelimiter("\\Z");
-			String json = s.next();
-
-			Map<String, Object> ht = JsonUtil.map(json);
-			if (ht.containsKey("error"))
-				throw ApiException.createException((Map<String, Object>) ht.get("error"));
-
-			T r = JsonUtil.object(json, responseClass);
-			r.populate(ht);
-			r.setGateway(getGateway());
-
-			if (!r.isValidSignature())
-				throw new InvalidSignatureException();
-
-			return r;
+			HttpResponse response = getGateway().getHttpAdapter().onSendRequest(data, url, getHttpMethod(), authString);
+			return processRequest(response);
 		}
 		catch (ApiException a)
 		{
@@ -123,9 +69,99 @@ public abstract class Request<T extends Response> extends Message
 		}
 		catch (Exception e)
 		{
-			ApiException.createException(e.getMessage(), -1L);
+			e.printStackTrace();
+			throw ApiException.createException(e.getMessage(), -1L);
 		}
+	}
 
-		return null;
+	public void send(final ResponseListener<T> responseListener)
+	{
+		try
+		{
+			String qs = fetchQueryString();
+			byte[] data = fetchData(qs);
+			String url = fetchUrl(qs);
+			String authString = fetchAuthString();
+
+			getGateway().getHttpAdapter().onSendRequest(data, url, getHttpMethod(), authString, new HttpListener() {
+
+				@Override
+				public void onResponse(HttpResponse response)
+				{
+					T r = processRequest(response);
+					responseListener.onResponse(r);
+				}
+
+				@Override
+				public void onError(Exception e)
+				{
+					responseListener.onError(processException(e));
+				}
+			});
+		}
+		catch (Exception e)
+		{
+			responseListener.onError(processException(e));
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	private T processRequest(HttpResponse response)
+	{
+		if (response.getStatusCode() != 200)
+			throw new RequestException("Http Error " + response.getStatusCode(), (long) response.getStatusCode(), null);
+
+		Map<String, Object> ht = JsonUtil.map(response.getContent());
+		if (ht.containsKey("error"))
+			throw ApiException.createException((Map<String, Object>) ht.get("error"));
+
+		T r = JsonUtil.object(response.getContent(), responseClass);
+		r.populate(ht);
+		r.setGateway(getGateway());
+
+		if (!r.isValidSignature())
+			throw new InvalidSignatureException();
+
+		return r;
+	}
+
+	private ApiException processException(Exception e)
+	{
+		ApiException apiEx = null;
+		if (e instanceof ApiException)
+			apiEx = (ApiException) e;
+		else
+			apiEx = ApiException.createException(e.getMessage(), -1L);
+		return apiEx;
+	}
+
+	private String fetchAuthString()
+	{
+		String authString = EncodeUtil.createBasicAuthString(getGateway().getApiKey(), getGateway().getApiSecret());
+		return authString;
+	}
+
+	private String fetchUrl(String qs)
+	{
+		return isBodySent() ? getHttpEndpoint() : getHttpEndpoint() + "?" + qs;
+	}
+
+	private byte[] fetchData(String qs) throws UnsupportedEncodingException
+	{
+		return isBodySent() ? qs.getBytes("UTF-8") : null;
+	}
+
+	private String fetchQueryString()
+	{
+		Map<String, Boolean> exclude = new HashMap<String, Boolean>();
+		exclude.put("sig", true);
+		exclude.put("ts", true);
+		String qs = toFormData(false, exclude);
+		return qs;
+	}
+
+	private boolean isBodySent()
+	{
+		return !("GET".equals(getHttpMethod()) || "DELETE".equals(getHttpMethod()));
 	}
 }

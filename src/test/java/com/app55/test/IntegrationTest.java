@@ -84,6 +84,10 @@ public class IntegrationTest
 
 		Schedule schedule2 = createSchedule(user, workingCard, "0.12").getSchedule();
 		Schedule schedule3 = createSchedule(user, workingCard, "0.13").getSchedule();
+		
+		schedule3.setEnd("10-10-2016");
+		updateSchedule(user, workingCard, schedule3);
+		schedule3 = getSchedule(user, schedule3).getSchedule();
 
 		ScheduleListResponse listResponse = listSchedules(user, null);
 		assertTrue("List does not contain expected schedule1", listResponse.getSchedules().contains(schedule1));
@@ -93,7 +97,7 @@ public class IntegrationTest
 
 		deleteSchedule(user, schedule1);
 		deleteSchedule(user, schedule2);
-		deleteSchedule(user, schedule3);
+		// deleteSchedule(user, schedule3);
 
 		listResponse = listSchedules(user, null);
 		assertEquals("Schedule list not expected size.", 3, listResponse.getSchedules().size());
@@ -271,10 +275,8 @@ public class IntegrationTest
 		basicUser.setId(user.getId());
 		Card basicCard = new Card();
 		basicCard.setToken(card.getToken());
-		Schedule basicSchedule = new Schedule();
-		basicSchedule.setId(schedule.getId());
 
-		ScheduleUpdateResponse response = TestConfiguration.GATEWAY.updateSchedule(basicUser, basicCard, basicSchedule).send();
+		ScheduleUpdateResponse response = TestConfiguration.GATEWAY.updateSchedule(basicUser, basicCard, schedule).send();
 
 		assertNotNull("ScheduleUpdate: Response not returned.", response);
 		System.out.println("ScheduleUpdate: SUCCESS");

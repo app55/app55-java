@@ -1,8 +1,8 @@
 package com.app55.message;
 
-import com.app55.domain.Schedule;
-
 import java.util.List;
+
+import com.app55.domain.Schedule;
 
 public class ScheduleListResponse extends Response
 {

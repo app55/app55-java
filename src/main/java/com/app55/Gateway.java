@@ -18,23 +18,37 @@ import com.app55.message.UserAuthenticateRequest;
 import com.app55.message.UserCreateRequest;
 import com.app55.message.UserGetRequest;
 import com.app55.message.UserUpdateRequest;
+import com.app55.transport.DefaultHttpAdapter;
+import com.app55.transport.HttpAdapter;
 
 public class Gateway
 {
 	private Environment	environment;
+	private HttpAdapter	httpAdapter;
 	private String		apiKey;
 	private String		apiSecret;
 
 	public Gateway(Environment environment, String apiKey, String apiSecret)
 	{
+		this(environment, apiKey, apiSecret, new DefaultHttpAdapter());
+	}
+	
+	public Gateway(Environment environment, String apiKey, String apiSecret, HttpAdapter httpAdapter)
+	{
 		this.environment = environment;
 		this.apiKey = apiKey;
 		this.apiSecret = apiSecret;
+		this.httpAdapter = httpAdapter;
 	}
 
 	public Environment getEnvironment()
 	{
 		return environment;
+	}
+	
+	public HttpAdapter getHttpAdapter()
+	{
+		return httpAdapter;
 	}
 
 	public String getApiKey()

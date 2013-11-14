@@ -1,8 +1,5 @@
 package com.app55.util;
 
-import java.beans.IntrospectionException;
-import java.beans.Introspector;
-import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -10,6 +7,10 @@ import java.util.Map;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
+
+import com.googlecode.openbeans.IntrospectionException;
+import com.googlecode.openbeans.Introspector;
+import com.googlecode.openbeans.PropertyDescriptor;
 
 public final class ReflectionUtil
 {
@@ -106,6 +107,7 @@ public final class ReflectionUtil
 		}
 	}
 
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private static Method getMethod(String methodName, Class clazz, Class<?>[] parameterTypes) throws NoSuchMethodException
 	{
 		try

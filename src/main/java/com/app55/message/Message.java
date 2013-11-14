@@ -1,6 +1,5 @@
 package com.app55.message;
 
-import java.beans.PropertyDescriptor;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -11,13 +10,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
-import com.app55.util.ReflectionUtil;
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.app55.Gateway;
 import com.app55.converter.Converter;
 import com.app55.util.EncodeUtil;
+import com.app55.util.ReflectionUtil;
+import com.googlecode.openbeans.PropertyDescriptor;
 
 public abstract class Message
 {
@@ -61,7 +61,7 @@ public abstract class Message
 		return EncodeUtil.base64(digest);
 	}
 
-	protected String toFormData(boolean includeApiKey, Map<String, Boolean> exclude)
+	public String toFormData(boolean includeApiKey, Map<String, Boolean> exclude)
 	{
 		try
 		{
@@ -98,6 +98,7 @@ public abstract class Message
 		}
 	}
 
+	@SuppressWarnings("unused")
 	private Map<String, String> describe(Object o)
 	{
 		return describe(o, null, null);

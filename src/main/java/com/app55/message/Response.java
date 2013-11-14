@@ -1,6 +1,5 @@
 package com.app55.message;
 
-import java.beans.PropertyDescriptor;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -12,6 +11,7 @@ import org.codehaus.jackson.annotate.JsonProperty;
 
 import com.app55.Gateway;
 import com.app55.util.ReflectionUtil;
+import com.googlecode.openbeans.PropertyDescriptor;
 
 public class Response extends Message
 {
@@ -101,7 +101,7 @@ public class Response extends Message
 		}
 	}
 
-	void populate(Map<String, Object> hashtable)
+	public void populate(Map<String, Object> hashtable)
 	{
 		populate(hashtable, null);
 	}

@@ -1,7 +1,8 @@
 package com.app55.message;
 
-import com.app55.domain.User;
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.app55.domain.User;
 
 public final class UserAuthenticateRequest extends Request<UserAuthenticateResponse>
 {

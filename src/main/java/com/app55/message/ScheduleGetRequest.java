@@ -1,8 +1,9 @@
 package com.app55.message;
 
+import org.codehaus.jackson.annotate.JsonIgnore;
+
 import com.app55.domain.Schedule;
 import com.app55.domain.User;
-import org.codehaus.jackson.annotate.JsonIgnore;
 
 public class ScheduleGetRequest extends Request<ScheduleGetResponse>
 {

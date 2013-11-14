@@ -1,7 +1,8 @@
 package com.app55.message;
 
-import com.app55.domain.Transaction;
 import org.codehaus.jackson.annotate.JsonIgnore;
+
+import com.app55.domain.Transaction;
 
 public final class TransactionCommitRequest extends Request<TransactionCommitResponse>
 {
