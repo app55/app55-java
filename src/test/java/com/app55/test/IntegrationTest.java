@@ -102,7 +102,7 @@ public class IntegrationTest
 		listResponse = listSchedules(user, null);
 		assertEquals("Schedule list not expected size.", 3, listResponse.getSchedules().size());
 		listResponse = listSchedules(user, true);
-		assertEquals("Active schedule list not expected size.", 0, listResponse.getSchedules().size());
+		assertEquals("Active schedule list not expected size.", 1, listResponse.getSchedules().size());
 	}
 
 	private UserCreateResponse createUser()
