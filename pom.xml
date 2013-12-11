@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	
-	<version>0.8.6-SNAPSHOT</version>
+	<version>0.8.6</version>
 
 	<groupId>com.app55</groupId>
 	<artifactId>app55-java</artifactId>
@@ -94,6 +94,46 @@
 				<configuration>
 					<skip>true</skip>
 				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>2.9</version>
+
+				<executions>
+					<execution>
+						<id>attach-javadoc</id>
+						<goals>
+						<goal>jar</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-source-plugin</artifactId>
+				<version>2.1.2</version>
+				<executions>
+				<execution>
+				<id>attach-source</id>
+				<goals>
+					<goal>jar</goal>
+				</goals>
+				</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-gpg-plugin</artifactId>
+				<executions>
+				<execution>
+				<id>sign-artifacts</id>
+				<phase>verify</phase>
+				<goals>
+					<goal>sign</goal>
+				</goals>
+				</execution>
+				</executions>
 			</plugin>
 		</plugins>
 	</build>
