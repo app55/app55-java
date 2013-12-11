@@ -24,6 +24,7 @@ import com.app55.message.ScheduleDeleteResponse;
 import com.app55.message.ScheduleGetResponse;
 import com.app55.message.ScheduleListResponse;
 import com.app55.message.ScheduleUpdateResponse;
+import com.app55.message.TransactionCancelResponse;
 import com.app55.message.TransactionCommitResponse;
 import com.app55.message.TransactionCreateResponse;
 import com.app55.message.UserAuthenticateResponse;
@@ -46,7 +47,17 @@ public class IntegrationTest
 
 		Card card1 = createCard(user).getCard();
 		Transaction transaction = createTransaction(user, card1).getTransaction();
-		commitTransaction(transaction);
+		
+		cancelTransaction(user, transaction);
+		try
+		{
+			cancelTransaction(user, transaction);
+			assertTrue("It should throw an exception", false);
+		}
+		catch (Exception e)
+		{
+			// The transaction was already cancelled.
+		}
 
 		Card card2 = createCard(user).getCard();
 		transaction = createTransaction(user, card2).getTransaction();
@@ -97,7 +108,7 @@ public class IntegrationTest
 
 		deleteSchedule(user, schedule1);
 		deleteSchedule(user, schedule2);
-		// deleteSchedule(user, schedule3);
+		deleteSchedule(user, schedule3);
 
 		listResponse = listSchedules(user, null);
 		assertEquals("Schedule list not expected size.", 3, listResponse.getSchedules().size());
@@ -179,6 +190,17 @@ public class IntegrationTest
 		Assert.assertEquals("TransactionCommit: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
 		assertNotNull("TransactionCommit: Unexpected transaction auth code.", response.getTransaction().getAuthCode());
 		System.out.println("TransactionCommit: SUCCESS");
+		return response;
+	}
+
+	private TransactionCancelResponse cancelTransaction(User user, Transaction transaction)
+	{
+		System.out.println("\nTransactionCancel: " + transaction.getId());
+
+		TransactionCancelResponse response = TestConfiguration.GATEWAY.cancelTransaction(new User(user.getId()), new Transaction(String.valueOf(transaction.getId()))).send();
+
+		assertNotNull("nTransactionCancel: Response is null.", response);
+		System.out.println("nTransactionCancel: SUCCESS");
 		return response;
 	}
 

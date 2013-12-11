@@ -12,6 +12,7 @@ import com.app55.message.ScheduleDeleteRequest;
 import com.app55.message.ScheduleGetRequest;
 import com.app55.message.ScheduleListRequest;
 import com.app55.message.ScheduleUpdateRequest;
+import com.app55.message.TransactionCancelRequest;
 import com.app55.message.TransactionCommitRequest;
 import com.app55.message.TransactionCreateRequest;
 import com.app55.message.UserAuthenticateRequest;
@@ -32,7 +33,7 @@ public class Gateway
 	{
 		this(environment, apiKey, apiSecret, new DefaultHttpAdapter());
 	}
-	
+
 	public Gateway(Environment environment, String apiKey, String apiSecret, HttpAdapter httpAdapter)
 	{
 		this.environment = environment;
@@ -45,7 +46,7 @@ public class Gateway
 	{
 		return environment;
 	}
-	
+
 	public HttpAdapter getHttpAdapter()
 	{
 		return httpAdapter;
@@ -111,6 +112,13 @@ public class Gateway
 	public TransactionCommitRequest commitTransaction(Transaction transaction)
 	{
 		TransactionCommitRequest request = new TransactionCommitRequest(transaction);
+		request.setGateway(this);
+		return request;
+	}
+
+	public TransactionCancelRequest cancelTransaction(User user, Transaction transaction)
+	{
+		TransactionCancelRequest request = new TransactionCancelRequest(user, transaction);
 		request.setGateway(this);
 		return request;
 	}
