@@ -49,6 +49,7 @@ public class IntegrationTest
 		Transaction transaction = createTransaction(user, card1).getTransaction();
 		
 		cancelTransaction(user, transaction);
+		System.out.println("\nForce Bad Data Exception (already cancelled transaction):" );
 		try
 		{
 			cancelTransaction(user, transaction);
@@ -96,7 +97,13 @@ public class IntegrationTest
 		Schedule schedule2 = createSchedule(user, workingCard, "0.12").getSchedule();
 		Schedule schedule3 = createSchedule(user, workingCard, "0.13").getSchedule();
 		
-		schedule3.setEnd("10-10-2016");
+		try {
+		    Thread.sleep(5000);
+		} catch(InterruptedException ex) {
+		    ;
+		}
+
+		schedule3.setEnd("2016-10-10");
 		updateSchedule(user, workingCard, schedule3);
 		schedule3 = getSchedule(user, schedule3).getSchedule();
 
@@ -113,7 +120,7 @@ public class IntegrationTest
 		listResponse = listSchedules(user, null);
 		assertEquals("Schedule list not expected size.", 3, listResponse.getSchedules().size());
 		listResponse = listSchedules(user, true);
-		assertEquals("Active schedule list not expected size.", 1, listResponse.getSchedules().size());
+		assertEquals("Active schedule list not expected size.", 0, listResponse.getSchedules().size());
 	}
 
 	private UserCreateResponse createUser()
@@ -199,8 +206,8 @@ public class IntegrationTest
 
 		TransactionCancelResponse response = TestConfiguration.GATEWAY.cancelTransaction(new User(user.getId()), new Transaction(String.valueOf(transaction.getId()))).send();
 
-		assertNotNull("nTransactionCancel: Response is null.", response);
-		System.out.println("nTransactionCancel: SUCCESS");
+		assertNotNull("TransactionCancel: Response is null.", response);
+		System.out.println("TransactionCancel: SUCCESS");
 		return response;
 	}
 
