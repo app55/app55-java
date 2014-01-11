@@ -159,7 +159,8 @@ public class IntegrationTest
 	}
 	private void do3DRedirect(String redirectUrl) {
 		try {
-			HttpURLConnection con = (HttpURLConnection) new URL(redirectUrl + "&next=dev.app55.com/v1/echo").openConnection();
+			;
+			HttpURLConnection con = (HttpURLConnection) new URL(redirectUrl + "&next=" + TestConfiguration.GATEWAY.getEnvironment().getBaseUrl() + "/echo").openConnection();
 			con.setRequestMethod("GET");
 			con.setRequestProperty("Accept", "application/json");
 			con.setRequestProperty("Authorization", EncodeUtil.createBasicAuthString(TestConfiguration.GATEWAY.getApiKey(), TestConfiguration.GATEWAY.getApiSecret()));
