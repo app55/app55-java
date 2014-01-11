@@ -277,7 +277,7 @@ public class IntegrationTest
 		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction, true).send();
 
 		Assert.assertEquals("3D TransactionCreate: Unexpected amount.", transaction.getAmount(), response.getTransaction().getAmount());
-		Assert.assertEquals("3D TransactionCreate: Unexpected transaction code.", "card_is_enrolled", response.getTransaction().getCode());
+		Assert.assertNull("3D TransactionCreate: Expected transaction code is null.", response.getTransaction().getCode());
 		Assert.assertNotNull("3D TransactionCreate: Expected threeDSecureRedirectUrl.", response.getThreeDSecureRedirectUrl());
 		System.out.println("3D TransactionCreate: SUCCESS");
 		return response;
