@@ -13,6 +13,7 @@ public final class TransactionCreateRequest extends Request<TransactionCreateRes
 	private Card		card;
 	private Transaction	transaction;
 	private String		ipAddress;
+	private boolean 	threeds;
 
 	public TransactionCreateRequest()
 	{
@@ -21,10 +22,16 @@ public final class TransactionCreateRequest extends Request<TransactionCreateRes
 
 	public TransactionCreateRequest(User user, Card card, Transaction transaction)
 	{
+		this(user, card, transaction, false);
+	}
+	
+	public TransactionCreateRequest(User user, Card card, Transaction transaction, boolean threeds)
+	{
 		this();
 		this.user = user;
 		this.card = card;
 		this.transaction = transaction;
+		this.threeds = threeds;
 	}
 
 	public TransactionCreateRequest(User user, Card card, Transaction transaction, String ipAddress)
@@ -91,5 +98,13 @@ public final class TransactionCreateRequest extends Request<TransactionCreateRes
 	public void setIpAddress(String ipAddress)
 	{
 		this.ipAddress = ipAddress;
+	}
+	@JsonProperty(value = "threeds")
+	public boolean isThreeDSecure() {
+		return threeds;
+	}
+
+	public void setThreeDSecure(boolean threeds) {
+		this.threeds = threeds;
 	}
 }

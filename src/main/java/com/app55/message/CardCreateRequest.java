@@ -11,6 +11,7 @@ public final class CardCreateRequest extends Request<CardCreateResponse>
 	private User	user;
 	private Card	card;
 	private String	ipAddress;
+	private boolean threeds = false;
 
 	public CardCreateRequest()
 	{
@@ -19,9 +20,14 @@ public final class CardCreateRequest extends Request<CardCreateResponse>
 
 	public CardCreateRequest(User user, Card card)
 	{
+		this(user, card, false);
+	}
+	public CardCreateRequest(User user, Card card, boolean threeds)
+	{
 		this();
 		this.user = user;
 		this.card = card;
+		this.setThreeDSecure(threeds);
 	}
 
 	@Override
@@ -67,5 +73,13 @@ public final class CardCreateRequest extends Request<CardCreateResponse>
 	public void setIpAddress(String ipAddress)
 	{
 		this.ipAddress = ipAddress;
+	}
+	@JsonProperty(value = "threeds")
+	public boolean isThreeDSecure() {
+		return threeds;
+	}
+
+	public void setThreeDSecure(boolean threeds) {
+		this.threeds = threeds;
 	}
 }

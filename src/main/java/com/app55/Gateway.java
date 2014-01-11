@@ -1,5 +1,10 @@
 package com.app55;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.Scanner;
+
 import com.app55.domain.Card;
 import com.app55.domain.Schedule;
 import com.app55.domain.Transaction;
@@ -12,6 +17,7 @@ import com.app55.message.ScheduleDeleteRequest;
 import com.app55.message.ScheduleGetRequest;
 import com.app55.message.ScheduleListRequest;
 import com.app55.message.ScheduleUpdateRequest;
+import com.app55.message.ThreeDRedirectRequest;
 import com.app55.message.TransactionCancelRequest;
 import com.app55.message.TransactionCommitRequest;
 import com.app55.message.TransactionCreateRequest;
@@ -68,6 +74,13 @@ public class Gateway
 		request.setGateway(this);
 		return request;
 	}
+	
+	public CardCreateRequest createCard(User user, Card card, boolean threeds)
+	{
+		CardCreateRequest request = new CardCreateRequest(user, card, threeds);
+		request.setGateway(this);
+		return request;
+	}
 
 	public CardDeleteRequest deleteCard(User user, Card card)
 	{
@@ -86,6 +99,12 @@ public class Gateway
 	public TransactionCreateRequest createTransaction(User user, Card card, Transaction transaction)
 	{
 		TransactionCreateRequest request = new TransactionCreateRequest(user, card, transaction);
+		request.setGateway(this);
+		return request;
+	}
+	public TransactionCreateRequest createTransaction(User user, Card card, Transaction transaction, boolean threeds)
+	{
+		TransactionCreateRequest request = new TransactionCreateRequest(user, card, transaction, threeds);
 		request.setGateway(this);
 		return request;
 	}

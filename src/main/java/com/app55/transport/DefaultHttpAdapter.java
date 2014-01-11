@@ -1,8 +1,11 @@
 package com.app55.transport;
 
 import java.io.DataOutputStream;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Collection;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -37,6 +40,48 @@ public class DefaultHttpAdapter implements HttpAdapter
 
 		con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
 		con.setRequestProperty("Authorization", basicAuthString);
+		
+		if (data != null)
+		{
+			con.setFixedLengthStreamingMode(data.length);
+			con.setDoOutput(true);
+
+			DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+			wr.write(data);
+			wr.flush();
+			wr.close();
+		}
+		Scanner s = null;
+		if (con.getResponseCode() > 400) {
+			InputStream is = con.getErrorStream();
+			if (is != null) {
+				s = new Scanner(is);
+			}
+		}
+		else {
+			s = new Scanner(con.getInputStream());
+		}
+		String content = "";
+		if (s != null) {
+			s.useDelimiter("\\Z");
+			content = s.next();
+		}
+
+		return new HttpResponse(con.getResponseCode(), content);
+	}
+	
+	public HttpResponse onSendRequest(byte[] data, String url, String httpMethod, String basicAuthString, Map<String, String> headers) throws Exception
+	{
+		URL u = new URL(url);
+		HttpURLConnection con = (HttpURLConnection) u.openConnection();
+		con.setRequestMethod(httpMethod);
+
+		con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+		for (Map.Entry<String, String> entry : headers.entrySet()) {
+			con.setRequestProperty(entry.getKey(), entry.getValue());
+		}
+		con.setRequestProperty("Authorization", basicAuthString);
+		
 
 		if (data != null)
 		{

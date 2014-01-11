@@ -4,9 +4,16 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.DataOutputStream;
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Scanner;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,6 +26,7 @@ import com.app55.domain.User;
 import com.app55.message.CardCreateResponse;
 import com.app55.message.CardDeleteResponse;
 import com.app55.message.CardListResponse;
+import com.app55.message.Request;
 import com.app55.message.ScheduleCreateResponse;
 import com.app55.message.ScheduleDeleteResponse;
 import com.app55.message.ScheduleGetResponse;
@@ -26,12 +34,16 @@ import com.app55.message.ScheduleListResponse;
 import com.app55.message.ScheduleUpdateResponse;
 import com.app55.message.TransactionCancelResponse;
 import com.app55.message.TransactionCommitResponse;
+import com.app55.message.TransactionCreateRequest;
 import com.app55.message.TransactionCreateResponse;
 import com.app55.message.UserAuthenticateResponse;
 import com.app55.message.UserCreateResponse;
 import com.app55.message.UserGetResponse;
 import com.app55.message.UserUpdateResponse;
 import com.app55.test.util.TestUtil;
+import com.app55.transport.HttpResponse;
+import com.app55.util.EncodeUtil;
+import com.app55.util.JsonUtil;
 
 /**
  * This test flow provides a basic test of the java library against a sandbox account with api credentials defined in environment variables (APP55_API_KEY,
@@ -67,14 +79,37 @@ public class IntegrationTest
 		Card card3 = createCard(user).getCard();
 		transaction = createTransaction(user, card3).getTransaction();
 		commitTransaction(transaction);
-
-		List<Card> cards = listCards(user, 3).getCards();
+		//======
+		//create transaction with threeds=true and transaction.commit=false for an enrolled card
+		//do 3D redirect flow
+		TransactionCreateResponse tResponse = create3DTransaction(user,card3, false);
+		String redirectUrl = tResponse.getThreeDSecureRedirectUrl();
+		do3DRedirect(redirectUrl);
+		commitTransaction(tResponse.getTransaction());
+		//======
+		//create transaction with threeds=true and transaction.commit=true for an enrolled card
+		//do 3D redirect flow
+		TransactionCreateResponse tResponse2 = create3DTransaction(user,card3, true);
+		redirectUrl = tResponse2.getThreeDSecureRedirectUrl();
+		do3DRedirect(redirectUrl);
+		//======
+		Card card4 = create3DNonEnrolledCard(user).getCard();
+		//======
+		//create transaction with threeds=true with transaction.commit=false for a non-enrolled card
+		//send a transaction commit for above transaction 
+		TransactionCreateResponse tResponse3 = createNonEnrolledTransaction(user,card4, false);
+		commitTransaction(tResponse3.getTransaction());
+		//======		
+		//create transaction with threeds=true and transaction.commit=true for a non-enrolled card
+		createNonEnrolledTransaction(user,card4, true);
+		
+		List<Card> cards = listCards(user, 4).getCards();
 
 		int count = 0;
 		Card workingCard = null;
 		for (Card card : cards)
 		{
-			if (++count > 2)
+			if (++count > 3)
 			{
 				workingCard = card;
 				break;
@@ -122,7 +157,36 @@ public class IntegrationTest
 		listResponse = listSchedules(user, true);
 		assertEquals("Active schedule list not expected size.", 0, listResponse.getSchedules().size());
 	}
-
+	private void do3DRedirect(String redirectUrl) {
+		try {
+			HttpURLConnection con = (HttpURLConnection) new URL(redirectUrl + "&next=dev.app55.com/v1/echo").openConnection();
+			con.setRequestMethod("GET");
+			con.setRequestProperty("Accept", "application/json");
+			con.setRequestProperty("Authorization", EncodeUtil.createBasicAuthString(TestConfiguration.GATEWAY.getApiKey(), TestConfiguration.GATEWAY.getApiSecret()));
+			
+			Scanner s = null;
+			if (con.getResponseCode() > 400) {
+				InputStream is = con.getErrorStream();
+				if (is != null) {
+					s = new Scanner(is);
+				}
+			}
+			else {
+				s = new Scanner(con.getInputStream());
+			}
+			String content = "";
+			if (s != null) {
+				s.useDelimiter("\\Z");
+				content = s.next();
+			}
+			@SuppressWarnings("rawtypes")
+			Request req = new TransactionCreateRequest();
+			TransactionCreateResponse res =JsonUtil.object(content, TransactionCreateResponse.class);
+			Assert.assertEquals("3D Redirect: Unexpected transaction code.", "succeeded", res.getTransaction().getCode());
+			System.out.println("3D Redirect: SUCCESS");
+		}
+		catch (Exception ex) {ex.printStackTrace();}
+	}
 	private UserCreateResponse createUser()
 	{
 		String email = "example." + TestUtil.getTimestamp() + "@javalibtester.com";
@@ -143,6 +207,20 @@ public class IntegrationTest
 	{
 		Address address = new Address("8 Exchange Quay", "Manchester", "M5 3EJ", "GB");
 		Card card = new Card("App55 User", "4111111111111111", TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
+
+		System.out.println("\nCardCreate: " + card.getNumber());
+		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card).send();
+
+		Assert.assertEquals("CardCreate: Unexpected card expiry.", card.getExpiry(), response.getCard().getExpiry());
+		assertNotNull("CardCreate: Unexpected card token.", response.getCard().getToken());
+		System.out.println("CardCreate: SUCCESS");
+		return response;
+	}
+	
+	private CardCreateResponse create3DNonEnrolledCard(User user)
+	{
+		Address address = new Address("8 Exchange Quay", "Manchester", "M5 3EJ", "GB");
+		Card card = new Card("App55 User", "4543130000001116", TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
 
 		System.out.println("\nCardCreate: " + card.getNumber());
 		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card).send();
@@ -187,7 +265,37 @@ public class IntegrationTest
 		System.out.println("TransactionCreate: SUCCESS");
 		return response;
 	}
+	
+	private TransactionCreateResponse create3DTransaction(User user, Card card, boolean commit)
+	{
+		Transaction transaction = new Transaction("0.10", "GBP", null);
+		transaction.setCommit(commit);
+		Card c = new Card(card.getToken());
+		System.out.println("\nTransactionCreate: " + transaction.getAmount() + transaction.getCurrency());
+		
+		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction, true).send();
 
+		Assert.assertEquals("3D TransactionCreate: Unexpected amount.", transaction.getAmount(), response.getTransaction().getAmount());
+		Assert.assertEquals("3D TransactionCreate: Unexpected transaction code.", "card_is_enrolled", response.getTransaction().getCode());
+		Assert.assertNotNull("3D TransactionCreate: Expected threeDSecureRedirectUrl.", response.getThreeDSecureRedirectUrl());
+		System.out.println("3D TransactionCreate: SUCCESS");
+		return response;
+	}
+
+	private TransactionCreateResponse createNonEnrolledTransaction(User user, Card card, boolean commit)
+	{
+		Transaction transaction = new Transaction("0.10", "GBP", null);
+		transaction.setCommit(commit);
+		Card c = new Card(card.getToken());
+		System.out.println("\nTransactionCreate: " + transaction.getAmount() + transaction.getCurrency());
+		
+		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction, true).send();
+
+		Assert.assertEquals("Non-enrolled TransactionCreate: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
+		Assert.assertNull("Non-enrolled TransactionCreate: expected threeDSecureRedirectUrl to be null", response.getThreeDSecureRedirectUrl());
+		System.out.println("Non-enrolled  TransactionCreate: SUCCESS");
+		return response;
+	}
 	private TransactionCommitResponse commitTransaction(Transaction transaction)
 	{
 		System.out.println("\nTransactionCommit: " + transaction.getAmount());

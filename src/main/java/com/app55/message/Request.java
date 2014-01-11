@@ -58,8 +58,33 @@ public abstract class Request<T extends Response> extends Message
 			byte[] data = fetchData(qs);
 			String url = fetchUrl(qs);
 			String authString = fetchAuthString();
-
+			
 			HttpResponse response = getGateway().getHttpAdapter().onSendRequest(data, url, getHttpMethod(), authString);
+			return processRequest(response);
+		}
+		catch (ApiException a)
+		{
+			// This just gets rethrown
+			throw a;
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			throw ApiException.createException(e.getMessage(), -1L);
+		}
+	}
+	
+	public T send(Map<String, String> headers) throws ApiException
+	{
+		
+		try
+		{
+			String qs = fetchQueryString();
+			byte[] data = fetchData(qs);
+			String url = fetchUrl("");
+			String authString = fetchAuthString();
+			
+			HttpResponse response = getGateway().getHttpAdapter().onSendRequest(data, url, getHttpMethod(), authString, headers);
 			return processRequest(response);
 		}
 		catch (ApiException a)
@@ -82,7 +107,7 @@ public abstract class Request<T extends Response> extends Message
 			byte[] data = fetchData(qs);
 			String url = fetchUrl(qs);
 			String authString = fetchAuthString();
-
+			
 			getGateway().getHttpAdapter().onSendRequest(data, url, getHttpMethod(), authString, new HttpListener() {
 
 				@Override
@@ -121,7 +146,7 @@ public abstract class Request<T extends Response> extends Message
 
 		if (!r.isValidSignature())
 			throw new InvalidSignatureException();
-
+		
 		return r;
 	}
 
@@ -156,6 +181,8 @@ public abstract class Request<T extends Response> extends Message
 		Map<String, Boolean> exclude = new HashMap<String, Boolean>();
 		exclude.put("sig", true);
 		exclude.put("ts", true);
+		exclude.put("httpEndpoint", true);
+		exclude.put("redirectUrl", true);
 		String qs = toFormData(false, exclude);
 		return qs;
 	}
