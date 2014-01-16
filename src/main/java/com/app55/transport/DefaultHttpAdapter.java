@@ -97,7 +97,6 @@ public class DefaultHttpAdapter implements HttpAdapter
 		Scanner s = new Scanner(con.getInputStream());
 		s.useDelimiter("\\Z");
 		String content = s.next();
-
 		return new HttpResponse(con.getResponseCode(), content);
 	}
 

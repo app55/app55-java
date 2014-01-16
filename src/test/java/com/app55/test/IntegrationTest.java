@@ -186,7 +186,9 @@ public class IntegrationTest
 			Assert.assertEquals("3D Redirect: Unexpected transaction code.", "succeeded", res.getTransaction().getCode());
 			System.out.println("3D Redirect: SUCCESS");
 		}
-		catch (Exception ex) {ex.printStackTrace();}
+		catch (Exception ex) {
+			//ex.printStackTrace();
+		}
 	}
 	private UserCreateResponse createUser()
 	{

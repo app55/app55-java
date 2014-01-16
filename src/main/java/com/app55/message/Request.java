@@ -69,7 +69,6 @@ public abstract class Request<T extends Response> extends Message
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
 			throw ApiException.createException(e.getMessage(), -1L);
 		}
 	}
@@ -94,7 +93,6 @@ public abstract class Request<T extends Response> extends Message
 		}
 		catch (Exception e)
 		{
-			e.printStackTrace();
 			throw ApiException.createException(e.getMessage(), -1L);
 		}
 	}
