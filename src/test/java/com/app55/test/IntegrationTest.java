@@ -54,14 +54,14 @@ public class IntegrationTest
 	@Test
 	public void test() throws Exception
 	{
+		System.out.print("\napp55-java integration tests - api key: " + TestConfiguration.GATEWAY.getApiKey() + "\n");
 		User user = createUser().getUser();
-		checkGetUser(user);
+		getUser(user.getId());
 
-		Card card1 = createCard(user).getCard();
+		Card card1 = createCard(user, "4111111111111111", false).getCard();
 		Transaction transaction = createTransaction(user, card1).getTransaction();
 		
 		cancelTransaction(user, transaction);
-		System.out.println("\nForce Bad Data Exception (already cancelled transaction):" );
 		try
 		{
 			cancelTransaction(user, transaction);
@@ -72,11 +72,11 @@ public class IntegrationTest
 			// The transaction was already cancelled.
 		}
 
-		Card card2 = createCard(user).getCard();
+		Card card2 = createCard(user, "4111111111111111", false).getCard();
 		transaction = createTransaction(user, card2).getTransaction();
 		commitTransaction(transaction);
 
-		Card card3 = createCard(user).getCard();
+		Card card3 = createCard(user, "4111111111111111", false).getCard();
 		transaction = createTransaction(user, card3).getTransaction();
 		commitTransaction(transaction);
 		//======
@@ -93,15 +93,15 @@ public class IntegrationTest
 		redirectUrl = tResponse2.getThreeDSecureRedirectUrl();
 		do3DRedirect(redirectUrl);
 		//======
-		Card card4 = create3DNonEnrolledCard(user).getCard();
+		Card card4 = createCard(user, "4543130000001116", true).getCard();
 		//======
 		//create transaction with threeds=true with transaction.commit=false for a non-enrolled card
 		//send a transaction commit for above transaction 
-		TransactionCreateResponse tResponse3 = createNonEnrolledTransaction(user,card4, false);
+		TransactionCreateResponse tResponse3 = create3DTransaction(user,card4, false);
 		commitTransaction(tResponse3.getTransaction());
 		//======		
 		//create transaction with threeds=true and transaction.commit=true for a non-enrolled card
-		createNonEnrolledTransaction(user,card4, true);
+		create3DTransaction(user,card4, true);
 		
 		List<Card> cards = listCards(user, 4).getCards();
 
@@ -123,7 +123,7 @@ public class IntegrationTest
 		updateUser(user);
 		authenticateUser(user.getId());
 
-		Schedule schedule1 = createSchedule(user, workingCard).getSchedule();
+		Schedule schedule1 = createSchedule(user, workingCard, "0.10").getSchedule();
 		getSchedule(user, schedule1).getSchedule();
 
 		ScheduleGetResponse response = getSchedule(user, schedule1);
@@ -135,7 +135,7 @@ public class IntegrationTest
 		try {
 		    Thread.sleep(5000);
 		} catch(InterruptedException ex) {
-		    ;
+		    
 		}
 
 		schedule3.setEnd("2016-10-10");
@@ -192,66 +192,93 @@ public class IntegrationTest
 	}
 	private UserCreateResponse createUser()
 	{
-		String email = "example." + TestUtil.getTimestamp() + "@javalibtester.com";
+		String email = "example." + TestUtil.getTimestamp() + "@app55.com";
 		String phone = "0123 456 7890";
 		String password = "pa55word";
-		System.out.println("\nUserCreate: " + email);
+		System.out.print("Creating user " + email + "...");
 
 		UserCreateResponse response = TestConfiguration.GATEWAY.createUser(new User(email, phone, password, password)).send();
-
-		System.out.println("UserCreated:" + response.getUser().getId());
+		
 		assertEquals("UserCreate: Unexpected email.", email, response.getUser().getEmail());
 		assertEquals("UserCreate: Unexpected phone.", phone, response.getUser().getPhone());
-		System.out.println("UserCreate: SUCCESS");
-		return response;
-	}
-
-	private CardCreateResponse createCard(User user)
-	{
-		Address address = new Address("8 Exchange Quay", "Manchester", "M5 3EJ", "GB");
-		Card card = new Card("App55 User", "4111111111111111", TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
-
-		System.out.println("\nCardCreate: " + card.getNumber());
-		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card).send();
-
-		Assert.assertEquals("CardCreate: Unexpected card expiry.", card.getExpiry(), response.getCard().getExpiry());
-		assertNotNull("CardCreate: Unexpected card token.", response.getCard().getToken());
-		System.out.println("CardCreate: SUCCESS");
+		System.out.print("DONE (" + response.getUser().getId() + ")\n");
 		return response;
 	}
 	
-	private CardCreateResponse create3DNonEnrolledCard(User user)
+	private void getUser(Long userId)
+	{
+		System.out.print("Getting user " + String.valueOf(userId) + "...");
+
+		User basicUser = new User();
+		basicUser.setId(userId);
+
+		UserGetResponse response = TestConfiguration.GATEWAY.getUser(basicUser).send();
+
+		Assert.assertEquals("UserGet: Returned user not not as expected.", userId, response.getUser().getId());
+		System.out.print("DONE\n");
+	}
+	
+	private UserUpdateResponse updateUser(User user)
+	{
+		String email = "example." + TestUtil.getTimestamp() + "@emailtester.com";
+		String password = "password01";
+		User u = new User((long) user.getId(), email, password, password);
+		System.out.print("Updating user...");
+
+		UserUpdateResponse response = TestConfiguration.GATEWAY.updateUser(u).send();
+
+		assertNotNull("UserUpdate: Response not returned.", response);
+		System.out.print("DONE\n");
+		return response;
+	}
+	
+	private UserAuthenticateResponse authenticateUser(Long expectedUserId)
+	{
+		String password = "password01";
+		User user = new User(expectedUserId);
+		user.setPassword(password);
+		System.out.print("Authenticating user...");
+
+		UserAuthenticateResponse response = TestConfiguration.GATEWAY.authenticateUser(user).send();
+
+		Assert.assertEquals("UserAuthenticate: Unexpected user id.", expectedUserId, response.getUser().getId());
+		System.out.print("DONE\n");
+		return response;
+	}
+
+	private CardCreateResponse createCard(User user, String cardNumber, boolean threeds)
 	{
 		Address address = new Address("8 Exchange Quay", "Manchester", "M5 3EJ", "GB");
-		Card card = new Card("App55 User", "4543130000001116", TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
+		Card card = new Card("App55 User", cardNumber, TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
 
-		System.out.println("\nCardCreate: " + card.getNumber());
-		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card).send();
+		System.out.print("Creating card...");
+		CardCreateResponse response = TestConfiguration.GATEWAY.createCard(new User((long) user.getId()), card, threeds).send();
 
 		Assert.assertEquals("CardCreate: Unexpected card expiry.", card.getExpiry(), response.getCard().getExpiry());
-		assertNotNull("CardCreate: Unexpected card token.", response.getCard().getToken());
-		System.out.println("CardCreate: SUCCESS");
+		String token = response.getCard().getToken();
+		assertNotNull("CardCreate: Unexpected card token.",token);
+		System.out.print("DONE (card-token " + token + ")\n");
 		return response;
 	}
 
 	private CardListResponse listCards(User user, int expectedNumber)
 	{
-		System.out.println("\nCardList: " + user.getId());
+		System.out.print("Listing cards...");
 		CardListResponse response = TestConfiguration.GATEWAY.listCards(new User((long) user.getId())).send();
-
-		assertTrue("CardList: Incorrect card list size.", response.getCards().size() == expectedNumber);
-		System.out.println("CardList: SUCCESS");
+		int size = response.getCards().size();
+		assertTrue("CardList: Incorrect card list size.", size == expectedNumber);
+		System.out.print("DONE (" + size + " cards)\n");
 		return response;
 	}
 
 	private CardDeleteResponse deleteCard(User user, Card card)
 	{
-		System.out.println("\nCardDelete: " + card.getToken());
+		System.out.print("Deleting card " + card.getToken() + "...");
 
 		CardDeleteResponse response = TestConfiguration.GATEWAY.deleteCard(new User((long) user.getId()), new Card(card.getToken())).send();
 
 		assertNotNull("CardDelete: Response not returned.", response);
-		System.out.println("CardDelete: SUCCESS");
+		System.out.print("DONE\n");
 		return response;
 	}
 
@@ -259,13 +286,13 @@ public class IntegrationTest
 	{
 		Transaction transaction = new Transaction("0.10", "GBP", null);
 		Card c = new Card(card.getToken());
-		System.out.println("\nTransactionCreate: " + transaction.getAmount() + transaction.getCurrency());
+		System.out.print("Creating transaction...");
 
 		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction).send();
 
 		Assert.assertEquals("TransactionCreate: Unexpected amount.", transaction.getAmount(), response.getTransaction().getAmount());
 		Assert.assertEquals("TransactionCreate: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
-		System.out.println("TransactionCreate: SUCCESS");
+		System.out.print("DONE (transaction-id " + response.getTransaction().getId() + ")\n");
 		return response;
 	}
 	
@@ -274,106 +301,79 @@ public class IntegrationTest
 		Transaction transaction = new Transaction("0.10", "GBP", null);
 		transaction.setCommit(commit);
 		Card c = new Card(card.getToken());
-		System.out.println("\nTransactionCreate: " + transaction.getAmount() + transaction.getCurrency());
+		System.out.print("Creating transaction...");
 		
 		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction, true).send();
 
-		Assert.assertEquals("3D TransactionCreate: Unexpected amount.", transaction.getAmount(), response.getTransaction().getAmount());
-		Assert.assertNull("3D TransactionCreate: Expected transaction code is null.", response.getTransaction().getCode());
-		Assert.assertNotNull("3D TransactionCreate: Expected threeDSecureRedirectUrl.", response.getThreeDSecureRedirectUrl());
-		System.out.println("3D TransactionCreate: SUCCESS");
+		if (card.getNumber().equals("454313******1116")) {
+			Assert.assertNull("Non-enrolled TransactionCreate: expected threeDSecureRedirectUrl to be null", response.getThreeDSecureRedirectUrl());
+		}
+		else {
+			Assert.assertNotNull("3D TransactionCreate: Expected threeDSecureRedirectUrl.", response.getThreeDSecureRedirectUrl());
+		}
+		System.out.print("DONE (transaction-id " + response.getTransaction().getId() + ")\n");
 		return response;
 	}
-
-	private TransactionCreateResponse createNonEnrolledTransaction(User user, Card card, boolean commit)
+	
+	private TransactionCreateResponse createGuestTransaction(String cardNumber, boolean commit, boolean threeds)
 	{
-		Transaction transaction = new Transaction("0.10", "GBP", null);
-		transaction.setCommit(commit);
-		Card c = new Card(card.getToken());
-		System.out.println("\nTransactionCreate: " + transaction.getAmount() + transaction.getCurrency());
+		String email = "example." + TestUtil.getTimestamp() + "@javalibtester.com";
 		
-		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(new User((long) user.getId()), c, transaction, true).send();
+		Address address = new Address("8 Exchange Quay", "Manchester", "M5 3EJ", "GB");
+		Card c = new Card("App55 User", cardNumber, TestUtil.getTimestamp("MM/yyyy", 90), "111", null, address);
+		
+		User u = new User(email);
+		
+		Transaction t = new Transaction("0.10", "EUR", null);
+		t.setCommit(commit);
+		System.out.print("Creating transaction...");
+		
+		TransactionCreateResponse response = TestConfiguration.GATEWAY.createTransaction(u, c, t, threeds).send();
 
-		Assert.assertEquals("Non-enrolled TransactionCreate: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
-		Assert.assertNull("Non-enrolled TransactionCreate: expected threeDSecureRedirectUrl to be null", response.getThreeDSecureRedirectUrl());
-		System.out.println("Non-enrolled  TransactionCreate: SUCCESS");
+		Assert.assertEquals("3D TransactionCreate: Unexpected amount.", t.getAmount(), response.getTransaction().getAmount());
+		Assert.assertNull("3D TransactionCreate: Expected transaction code is null.", response.getTransaction().getCode());
+		if (!threeds) {
+			Assert.assertNull("Non-enrolled TransactionCreate: expected threeDSecureRedirectUrl to be null", response.getThreeDSecureRedirectUrl());
+		}
+		else {
+			Assert.assertNotNull("3D TransactionCreate: Expected threeDSecureRedirectUrl.", response.getThreeDSecureRedirectUrl());
+		}
+		System.out.print("DONE (transaction-id " + response.getTransaction().getId() + ")\n");
 		return response;
 	}
+
 	private TransactionCommitResponse commitTransaction(Transaction transaction)
 	{
-		System.out.println("\nTransactionCommit: " + transaction.getAmount());
+		System.out.print("Committing transaction..");
 
 		TransactionCommitResponse response = TestConfiguration.GATEWAY.commitTransaction(new Transaction(transaction.getId())).send();
 
 		Assert.assertEquals("TransactionCommit: Unexpected transaction code.", "succeeded", response.getTransaction().getCode());
 		assertNotNull("TransactionCommit: Unexpected transaction auth code.", response.getTransaction().getAuthCode());
-		System.out.println("TransactionCommit: SUCCESS");
+		System.out.print("DONE\n");
 		return response;
 	}
 
 	private TransactionCancelResponse cancelTransaction(User user, Transaction transaction)
 	{
-		System.out.println("\nTransactionCancel: " + transaction.getId());
-
-		TransactionCancelResponse response = TestConfiguration.GATEWAY.cancelTransaction(new User(user.getId()), new Transaction(String.valueOf(transaction.getId()))).send();
-
-		assertNotNull("TransactionCancel: Response is null.", response);
-		System.out.println("TransactionCancel: SUCCESS");
-		return response;
-	}
-
-	private UserUpdateResponse updateUser(User user)
-	{
-		String email = "example." + TestUtil.getTimestamp() + "@emailtester.com";
-		String password = "password01";
-		User u = new User((long) user.getId(), email, password, password);
-		System.out.println("\nUserUpdate: " + u.getId());
-
-		UserUpdateResponse response = TestConfiguration.GATEWAY.updateUser(u).send();
-
-		assertNotNull("UserUpdate: Response not returned.", response);
-		System.out.println("UserUpdate: SUCCESS");
-		return response;
-	}
-
-	private void checkGetUser(User user)
-	{
-		System.out.println("\nUserGet: " + user.getId());
-
-		// Remove extra data.
-		User basicUser = new User();
-		basicUser.setId(user.getId());
-
-		UserGetResponse response = TestConfiguration.GATEWAY.getUser(basicUser).send();
-
-		Assert.assertEquals("UserGet: Returned user not not as expected.", user.getId(), response.getUser().getId());
-		System.out.println("UserGet: SUCCESS");
-	}
-
-	private UserAuthenticateResponse authenticateUser(Long expectedUserId)
-	{
-		String password = "password01";
-		User user = new User(expectedUserId);
-		user.setPassword(password);
-		System.out.println("\nUserAuthenticate: " + user.getId());
-
-		UserAuthenticateResponse response = TestConfiguration.GATEWAY.authenticateUser(user).send();
-
-		Assert.assertEquals("UserAuthenticate: Unexpected user id.", expectedUserId, response.getUser().getId());
-		System.out.println("UserAuthenticate: SUCCESS");
-		return response;
-	}
-
-	private ScheduleCreateResponse createSchedule(User user, Card card)
-	{
-		return createSchedule(user, card, "0.10");
+		System.out.print("Cancelling transaction...");
+		TransactionCancelResponse response = null;
+		try {
+			response = TestConfiguration.GATEWAY.cancelTransaction(new User(user.getId()), new Transaction(String.valueOf(transaction.getId()))).send();
+			assertNotNull("TransactionCancel: Response is null.", response);
+			System.out.print("DONE\n");
+			return response;
+		}
+		catch (Exception ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 
 	private ScheduleCreateResponse createSchedule(User user, Card card, String amount)
 	{
 		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 		String start = format.format(new Date());
-		System.out.println("\nScheduleCreate: " + user.getId() + " " + card.getToken() + " " + amount);
+		System.out.print("Creating schedule...");
 
 		// Remove extra data.
 		Card cardTokenOnly = new Card();
@@ -385,13 +385,13 @@ public class IntegrationTest
 		ScheduleCreateResponse response = TestConfiguration.GATEWAY.createSchedule(user, cardTokenOnly, transaction, schedule).send();
 
 		assertNotNull("ScheduleCreate: Response not returned.", response);
-		System.out.println("ScheduleCreate: SUCCESS");
+		System.out.print("DONE (schedule " + response.getSchedule().getId() + ")\n");
 		return response;
 	}
 
 	private ScheduleGetResponse getSchedule(User user, Schedule schedule)
 	{
-		System.out.println("\nScheduleGet: " + schedule.getId());
+		System.out.print("Getting schedule...");
 
 		// Remove extra data.
 		Schedule basicSchedule = new Schedule();
@@ -402,13 +402,13 @@ public class IntegrationTest
 		ScheduleGetResponse response = TestConfiguration.GATEWAY.getSchedule(basicUser, basicSchedule).send();
 
 		Assert.assertEquals("ScheduleGet: Unexpected schedule id.", schedule.getId(), response.getSchedule().getId());
-		System.out.println("ScheduleGet: SUCCESS");
+		System.out.print("DONE\n");
 		return response;
 	}
 
 	private ScheduleUpdateResponse updateSchedule(User user, Card card, Schedule schedule)
 	{
-		System.out.println("\nScheduleUpdate: " + schedule.getId());
+		System.out.print("Updating schedule...");
 
 		// Remove extra data.
 		User basicUser = new User();
@@ -419,13 +419,13 @@ public class IntegrationTest
 		ScheduleUpdateResponse response = TestConfiguration.GATEWAY.updateSchedule(basicUser, basicCard, schedule).send();
 
 		assertNotNull("ScheduleUpdate: Response not returned.", response);
-		System.out.println("ScheduleUpdate: SUCCESS");
+		System.out.print("DONE\n");
 		return response;
 	}
 
 	private ScheduleListResponse listSchedules(User user, Boolean active)
 	{
-		System.out.println("\nScheduleList: " + user.getId());
+		System.out.print("Listing schedules...");
 
 		// Remove extra data.
 		User basicUser = new User();
@@ -434,13 +434,13 @@ public class IntegrationTest
 		ScheduleListResponse response = TestConfiguration.GATEWAY.listSchedule(basicUser, active).send();
 
 		assertNotNull("ScheduleList: Response not returned.", response);
-		System.out.println("ScheduleList: SUCCESS");
+		System.out.print("DONE (" + response.getSchedules().size() + " schedules)\n");
 		return response;
 	}
 
 	private ScheduleDeleteResponse deleteSchedule(User user, Schedule schedule)
 	{
-		System.out.println("\nScheduleDelete: " + schedule.getId());
+		System.out.print("Deleting schedule...");
 
 		// Remove extra data.
 		User basicUser = new User();
@@ -451,7 +451,17 @@ public class IntegrationTest
 		ScheduleDeleteResponse response = TestConfiguration.GATEWAY.deleteSchedule(basicUser, basicSchedule).send();
 
 		assertNotNull("ScheduleDelete: Response not returned.", response);
-		System.out.println("ScheduleDelete: SUCCESS");
+		System.out.print("DONE\n");
 		return response;
+	}
+	
+	private void multipleTransactions() {
+		System.out.print("multipleTransactions not yet implemented\n");
+	}
+	private void duplicateTransactions() {
+		System.out.print("duplicateTransactions not yet implemented\n");
+	}
+	private void duplicateGuestTransactions() {
+		System.out.print("duplicateGuestTransactions not yet implemented\n");
 	}
 }
