@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.app55</groupId>
 	<artifactId>app55-java</artifactId>
-	<version>0.8.8-SNAPSHOT</version>
+	<version>0.8.7</version>
 	<packaging>jar</packaging>
 	<name>App55 Library for Java</name>
 	<description>App55 client library for the Java platform.</description>
