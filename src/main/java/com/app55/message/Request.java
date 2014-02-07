@@ -131,9 +131,6 @@ public abstract class Request<T extends Response> extends Message
 	@SuppressWarnings("unchecked")
 	private T processRequest(HttpResponse response)
 	{
-		if (response.getStatusCode() != 200)
-			throw new RequestException("Http Error " + response.getStatusCode(), (long) response.getStatusCode(), null);
-
 		Map<String, Object> ht = JsonUtil.map(response.getContent());
 		if (ht.containsKey("error"))
 			throw ApiException.createException((Map<String, Object>) ht.get("error"));
