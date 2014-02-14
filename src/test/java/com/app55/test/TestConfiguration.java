@@ -7,8 +7,9 @@ public class TestConfiguration
 {
 	private static final String	API_KEY_DEFAULT		= "cHvG680shFTaPWhp8RHhGCSo5QbHkWxP";
 	private static final String	API_SECRET_DEFAULT	= "zMHzGPF3QAAQQzTDoTGtGz8f5WFZFjzM";
+	private static final String	API_ENVIRONMENT_DEFAULT	= "Development";
 
-	public static final Gateway	GATEWAY				= new Gateway(Environment.DEVELOPMENT, API_KEY_DEFAULT, API_SECRET_DEFAULT);
+	public static final Gateway	GATEWAY				= new Gateway(getEnvironment(), getApiKey(), getApiSecret());
 
 	public static String getApiKey()
 	{
@@ -20,5 +21,20 @@ public class TestConfiguration
 	{
 		String value = System.getenv("APP55_API_SECRET");
 		return value != null ? value : API_SECRET_DEFAULT;
+	}
+	public static Environment getEnvironment()
+	{
+		String value = System.getenv("APP55_API_ENVIRONMENT");
+		if (value == null)
+			value = API_ENVIRONMENT_DEFAULT;
+		
+		if (value.equalsIgnoreCase("Development"))
+			return Environment.DEVELOPMENT;
+		if (value.equalsIgnoreCase("Sandbox"))
+			return Environment.SANDBOX;
+		if (value.equalsIgnoreCase("Production"))
+			return Environment.PRODUCTION;
+		
+		return Environment.DEVELOPMENT;
 	}
 }

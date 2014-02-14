@@ -19,6 +19,7 @@ configurations, if you want to to run/debug the project within Eclipse.
 
 Revision History
 ----------------
+* 0.8.7 Add cancelTransaction method
 * 0.8.6 Jar now oss.sonatype.org Maven repo and synced to the central Maven repo.
 * 0.8.4 Now supports asynchronous requests and multiple HTTP transport mechanisms.
 * 0.8.3 Now supports Scheduled payments.
