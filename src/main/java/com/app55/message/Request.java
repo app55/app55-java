@@ -1,10 +1,13 @@
 package com.app55.message;
 
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+
+import javax.net.ssl.HttpsURLConnection;
 
 import org.codehaus.jackson.annotate.JsonIgnore;
 import org.codehaus.jackson.annotate.JsonProperty;
@@ -131,9 +134,21 @@ public abstract class Request<T extends Response> extends Message
 	@SuppressWarnings("unchecked")
 	private T processRequest(HttpResponse response)
 	{
-		if (response.getStatusCode() != 200)
-			throw new RequestException("Http Error " + response.getStatusCode(), (long) response.getStatusCode(), null);
-
+		int statusCode = response.getStatusCode();
+		
+		switch (statusCode) {
+			// Pass thru responses with data
+			case HttpURLConnection.HTTP_BAD_REQUEST:
+			case HttpURLConnection.HTTP_FORBIDDEN:
+			case HttpURLConnection.HTTP_UNAUTHORIZED:
+			case HttpURLConnection.HTTP_INTERNAL_ERROR:
+			case HttpURLConnection.HTTP_PAYMENT_REQUIRED:
+			case HttpURLConnection.HTTP_OK:
+				break;
+			default:
+				throw new RequestException("Http Error " + response.getStatusCode(), (long) response.getStatusCode(), null);
+		}
+				
 		Map<String, Object> ht = JsonUtil.map(response.getContent());
 		if (ht.containsKey("error"))
 			throw ApiException.createException((Map<String, Object>) ht.get("error"));
