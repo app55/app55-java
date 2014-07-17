@@ -9,6 +9,7 @@ public final class User
 	private String	password;
 	private String	confirmPassword;
 	private String	phone;
+	private Boolean active;
 
 	public User()
 	{
@@ -118,6 +119,14 @@ public final class User
 	public void setPhone(String phone)
 	{
 		this.phone = phone;
+	}
+
+	public Boolean getActive() {
+		return active;
+	}
+
+	public void setActive(Boolean active) {
+		this.active = active;
 	}
 
 	@Override

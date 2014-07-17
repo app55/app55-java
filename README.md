@@ -19,6 +19,7 @@ configurations, if you want to to run/debug the project within Eclipse.
 
 Revision History
 ----------------
+* 0.8.9 Update for user deactivate option
 * 0.8.8 Fix ApiException not thrown for appropriate HTTP errors
 * 0.8.7 Add cancelTransaction method
 * 0.8.6 Jar now oss.sonatype.org Maven repo and synced to the central Maven repo.

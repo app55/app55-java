@@ -12,6 +12,7 @@ public class Transaction
 	private String	authCode;
 	private Boolean	commit;
 	private String	type;
+	private String 	userId;
 
 	public Transaction()
 	{
@@ -119,6 +120,14 @@ public class Transaction
 	public void setType(String type)
 	{
 		this.type = type;
+	}
+
+	public String getUserId() {
+		return userId;
+	}
+
+	public void setUserId(String userId) {
+		this.userId = userId;
 	}
 
 	@Override
