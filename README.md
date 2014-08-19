@@ -19,13 +19,14 @@ configurations, if you want to to run/debug the project within Eclipse.
 
 Revision History
 ----------------
-* 0.8.9 Update for user deactivate option
-* 0.8.8 Fix ApiException not thrown for appropriate HTTP errors
-* 0.8.7 Add cancelTransaction method
-* 0.8.6 Jar now oss.sonatype.org Maven repo and synced to the central Maven repo.
-* 0.8.4 Now supports asynchronous requests and multiple HTTP transport mechanisms.
-* 0.8.3 Now supports Scheduled payments.
-* 0.8.2 Initial library release. For App55 Release 2.8.0
+* 0.8.10&nbsp; Update for card valid flag
+* 0.8.9&nbsp;&nbsp; Update for user deactivate option
+* 0.8.8&nbsp;&nbsp; Fix ApiException not thrown for appropriate HTTP errors
+* 0.8.7&nbsp;&nbsp; Add cancelTransaction method
+* 0.8.6&nbsp;&nbsp; Jar now oss.sonatype.org Maven repo and synced to the central Maven repo.
+* 0.8.4&nbsp;&nbsp; Now supports asynchronous requests and multiple HTTP transport mechanisms.
+* 0.8.3&nbsp;&nbsp; Now supports Scheduled payments.
+* 0.8.2&nbsp;&nbsp; Initial library release. For App55 Release 2.8.0
 
 Maven
 -----

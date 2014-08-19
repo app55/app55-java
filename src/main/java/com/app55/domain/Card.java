@@ -15,6 +15,7 @@ public class Card
 	private String	type;
 	private String	description;
 	private String	issue;
+	private Boolean valid;
 
 	public Card()
 	{
@@ -175,6 +176,14 @@ public class Card
 	public void setIssue(String issue)
 	{
 		this.issue = issue;
+	}
+
+	public Boolean getValid() {
+		return valid;
+	}
+
+	public void setValid(Boolean valid) {
+		this.valid = valid;
 	}
 
 	@Override
